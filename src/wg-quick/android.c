@@ -1170,6 +1170,12 @@ static void cmd_down(const char *iface)
 	exit(EXIT_SUCCESS);
 }
 
+static bool has_kernel_support(void)
+{
+	struct stat s;
+	return (stat("/sys/module/amneziawg", &s) == 0);
+}
+
 static void parse_options(char **iface, char **config, unsigned int *mtu, char **addrs, char **dnses, char **excluded_applications, char **included_applications, const char *arg)
 {
 	_cleanup_fclose_ FILE *file = NULL;
@@ -1261,41 +1267,73 @@ static void parse_options(char **iface, char **config, unsigned int *mtu, char *
 				*mtu = atoi(clean + 4);
 				continue;
 			} else if (!strncasecmp(clean, "Jc=", 3) && j > 4) {
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "Jmin=", 5) && j > 4) {
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "Jmax=", 5) && j > 4) {
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "S1=", 3) && j > 4) {
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "S2=", 3) && j > 4) {
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "S3=", 3) && j > 4) {
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "S4=", 3) && j > 4) {
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "H1=", 3) && j > 4) {
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "H2=", 3) && j > 4) {
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "H3=", 3) && j > 4) {
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "H4=", 3) && j > 4) {
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "I1=", 3) && j > 4) {
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "I2=", 3) && j >= 3) {
 				// I2 can be empty, so we only check for the prefix
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "I3=", 3) && j >= 3) {
 				// I3 can be empty, so we only check for the prefix
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "I4=", 3) && j >= 3) {
 				// I4 can be empty, so we only check for the prefix
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			} else if (!strncasecmp(clean, "I5=", 3) && j >= 3) {
 				// I5 can be empty, so we only check for the prefix
-				is_awg_on = true;
+				if (!has_kernel_support()) {
+					is_awg_on = true;
+				}
 			}
 		}
 		*config = concat_and_free(*config, "", line);
