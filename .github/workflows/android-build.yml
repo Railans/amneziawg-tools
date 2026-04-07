@@ -1,0 +1,97 @@
+name: Android
+
+on: [push]
+
+jobs:
+  Build-for-Android:
+    name: Build for Android
+    runs-on: ubuntu-latest
+    container:
+      image: ubuntu:22.04
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Installing system dependencies
+      run: |
+        apt -y update && apt -y install build-essential unzip git python3 curl wget zip
+
+    - name: Downloading and unpacking the NDK
+      run: |
+        NDK_VER="r26b"
+        wget -q https://dl.google.com/android/repository/android-ndk-${NDK_VER}-linux.zip
+        unzip -q android-ndk-${NDK_VER}-linux.zip -d /opt
+        # Записываем путь в глобальное окружение GitHub
+        echo "ANDROID_NDK_HOME=/opt/android-ndk-${NDK_VER}" >> $GITHUB_ENV
+
+    - name: Setup Toolchain Variables
+      run: |
+        # Используем переменную из окружения
+        TOOLCHAIN=$ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64
+        TARGET=aarch64-linux-android34
+
+        # Сохраняем пути к бинарникам для следующих шагов
+        echo "CC=$TOOLCHAIN/bin/${TARGET}-clang" >> $GITHUB_ENV
+        echo "STRIP=$TOOLCHAIN/bin/llvm-strip" >> $GITHUB_ENV
+        echo "PATH=$TOOLCHAIN/bin:$PATH" >> $GITHUB_ENV
+
+    - name: Build AmneziaWG Tools
+      run: |
+        mkdir -p build
+        cd src
+
+        echo "--- Сборка основного бинарника awg ---"
+        make clean || true
+        make CC=$CC STRIP=$STRIP LDFLAGS="-static-libgcc" V=1
+        mv wg ../build/awg
+
+        echo "--- Сборка wg-quick (android.c) ---"
+        cd wg-quick
+        $CC -O3 -Wall -D_GNU_SOURCE android.c -o awg-quick-android -lbinder_ndk -llog
+        $STRIP awg-quick-android
+        mv awg-quick-android ../../build/awg-quick
+        cd ../../
+
+    - name: Prepare Magisk/KSU Module
+      run: |
+        cd build
+        mkdir -p system/bin
+        mv awg system/bin/awg
+        mv awg-quick system/bin/awg-quick
+
+        # Создаем module.prop
+        cat <<EOF > module.prop
+        id=amneziawg-tools
+        name=AmneziaWG Tools for Android
+        version=${{ github.ref_name }}
+        versionCode=$(date +%Y%m%d)
+        author=AmneziaWG
+        description=Kernel-space AmneziaWG tools arm64 devices.
+        EOF
+
+        # Создаем customize.sh
+        cat <<'EOF' > customize.sh
+        #!/system/bin/sh
+        ui_print "******************************"
+        ui_print "*  AmneziaWG-Tools Android   *"
+        ui_print "*                            *"
+        ui_print "******************************"
+        ui_print "- Installing binaries..."
+        ui_print "- Setting permissions and SELinux contexts..."
+        set_perm_recursive "$MODPATH" 0 0 0755 0755
+        set_perm "$MODPATH/system/bin/awg" 0 0 0755
+        set_perm "$MODPATH/system/bin/awg-quick" 0 0 0755
+        chcon -R u:object_r:system_file:s0 "$MODPATH/system/bin/"
+        ui_print "- Installation successful!"
+        EOF
+
+        # Даем права на исполнение
+        chmod 755 customize.sh
+        chmod 755 system/bin/*
+        cd ..
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+          name: AmneziaWG-Tools-Module
+          path: build/
