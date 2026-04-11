@@ -43,12 +43,12 @@ jobs:
         echo "--- Сборка основного бинарника awg ---"
         make clean || true
         make CC=$CC STRIP=$STRIP LDFLAGS="-static-libgcc" V=1
-        mv wg ../build/awg
 
         echo "--- Сборка wg-quick (android.c) ---"
         cd wg-quick
-        $CC -O3 -Wall -D_GNU_SOURCE android.c -o awg-quick-android -lbinder_ndk -llog
+        $CC -O3 -Wall -I.. -std=gnu99 android.c -o awg-quick-android -lbinder_ndk -llog
         $STRIP awg-quick-android
+        mv ../wg ../../build/awg
         mv awg-quick-android ../../build/awg-quick
         cd ../../
 
