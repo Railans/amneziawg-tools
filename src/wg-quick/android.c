@@ -26,6 +26,9 @@
 #include <sys/wait.h>
 #include <sys/param.h>
 #include <sys/system_properties.h>
+#ifndef isspace
+extern int isspace(int);
+#endif
 
 #ifndef AWG_PACKAGE_NAME
 #define AWG_PACKAGE_NAME "org.amnezia.awg"
